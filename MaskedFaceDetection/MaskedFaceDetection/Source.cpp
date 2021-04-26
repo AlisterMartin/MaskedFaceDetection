@@ -18,6 +18,10 @@ int main(int argc, const char** argv)
         "{camera    |0      |Camera number.             }"
         "{audio     |1      |Enable audio (0/1).        }");
     parser.about("MaskedFaceDetection v0.1");
+    if (parser.has("help")) {
+        parser.printMessage();
+        return 0;
+    }
     String face_cascade_name = samples::findFile("maskedFaceCascade.xml");
     if (!face_cascade.load(face_cascade_name))
     {
