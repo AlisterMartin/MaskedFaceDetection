@@ -12,18 +12,24 @@ vector<Rect> maskedDetection(Mat, int&, vector<Rect>);
 
 CascadeClassifier face_cascade;
 chrono::milliseconds framePrev = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch());
+bool frameTime;
+int acceptance;
 
 int main(int argc, const char** argv)
 {
     CommandLineParser parser(argc, argv,
         "{help h ?  |       |                           }"
         "{test      |       |Enable test mode.          }"
-        "{camera    |0      |Camera number.             }");
-    parser.about("MaskedFaceDetection v0.3");
+        "{camera    |0      |Camera number.             }"
+		"{acceptance|3      |Acceptance Frames			}"
+		"{frameTime |       |Use Frametime				}");
+    parser.about("MaskedFaceDetection v0.4");
     if (parser.has("help")) {
         parser.printMessage();
         return 0;
     }
+	frameTime = parser.has("frameTime");
+	acceptance = parser.get<int>("acceptance");
     String face_cascade_name = samples::findFile("data/maskedFaceCascade.xml");
     if (!face_cascade.load(face_cascade_name))
     {
@@ -119,16 +125,18 @@ vector<Rect> maskedDetection(Mat frame, int& frameCount, vector<Rect> prevFaces)
 			}
 		}
 		Point center(faces[i].x + faces[i].width / 2, faces[i].y + faces[i].height / 2);
-		rectangle(frame, faces.at(i), frameCount > 2 ? Scalar(0, 255, 0) : Scalar(255, 0, 255), 4);
-		if (frameCount > 2) {
+		rectangle(frame, faces.at(i), frameCount >= acceptance ? Scalar(0, 255, 0) : Scalar(255, 0, 255), 4);
+		if (frameCount >= acceptance) {
 			putText(frame, "Please enter", Point(faces[i].x, faces[i].y - 10), FONT_HERSHEY_SIMPLEX, 0.8, Scalar(0, 255, 0), 2);
 		}
 	}
 	putText(frame, "Please look at the screen", Point(0, 30), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 0), 2);
-    auto ft = (chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()) - framePrev).count();
-    to_string(ft);
-    putText(frame, to_string(ft), Point(0, 60), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 0), 2);
-    framePrev = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch());
+	if (frameTime) {
+		auto ft = (chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()) - framePrev).count();
+		to_string(ft);
+		putText(frame, to_string(ft), Point(0, 60), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 0), 2);
+		framePrev = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch());
+	}
 	imshow("Detection", frame);
 	return faces;
 }
