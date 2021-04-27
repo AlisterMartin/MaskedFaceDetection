@@ -22,7 +22,7 @@ int main(int argc, const char** argv)
         parser.printMessage();
         return 0;
     }
-    String face_cascade_name = samples::findFile("EnhancedCascade.xml");
+    String face_cascade_name = samples::findFile("maskedFaceCascade.xml");
     if (!face_cascade.load(face_cascade_name))
     {
         cout << "CASCADE LOAD ERROR" << endl;
@@ -41,6 +41,7 @@ int main(int argc, const char** argv)
 }
 
 void test() {
+	namedWindow("Detection", CV_WINDOW_NORMAL);
     std::string path = "A:\\Documents\\FinalYearProject\\FMLD-main\\test-images\\images";
     for (const auto& entry : filesystem::directory_iterator(path)) {
         Mat img = imread(entry.path().u8string());
@@ -63,16 +64,20 @@ void detect(int camera_device) {
         cout << "ERROR STARTING CAPTURE (CHECK CAMERA)" << endl;
         return;
     }
-
+	namedWindow("Detection", CV_WINDOW_NORMAL);
     Mat frame;
     while (capture.read(frame))
     {
+		//imshow("Detection", frame);
         if (frame.empty())
         {
             cout << "CAMERA UNRESPONSIVE" << endl;
+			break;
         }
+		if (waitKey(10) == 27) {
+			break;
+		}
         detectAndDisplay(frame);
-
     }
 }
 
@@ -89,6 +94,6 @@ void detectAndDisplay(Mat frame)
         rectangle(frame, faces.at(i), Scalar(255, 0, 255), 4);
         Mat faceROI = frame_gray(faces[i]);
     }
-    namedWindow("Detection", CV_WINDOW_NORMAL);
+    
     imshow("Detection", frame);
 }
