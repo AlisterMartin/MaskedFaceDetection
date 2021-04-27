@@ -7,6 +7,7 @@ using namespace cv;
 void detectAndDisplay(Mat);
 void test();
 void detect(int);
+vector<Rect> maskedDetection(Mat, int&, vector<Rect>);
 
 CascadeClassifier face_cascade;
 
@@ -66,9 +67,13 @@ void detect(int camera_device) {
     }
 	namedWindow("Detection", CV_WINDOW_NORMAL);
     Mat frame;
+	vector<Rect> prev = {};
+	int frameCount = 0;
     while (capture.read(frame))
     {
-		//imshow("Detection", frame);
+		if (frameCount > 2) {
+
+		}
         if (frame.empty())
         {
             cout << "CAMERA UNRESPONSIVE" << endl;
@@ -77,7 +82,7 @@ void detect(int camera_device) {
 		if (waitKey(10) == 27) {
 			break;
 		}
-        detectAndDisplay(frame);
+        prev = maskedDetection(frame, frameCount, prev);
     }
 }
 
@@ -96,4 +101,34 @@ void detectAndDisplay(Mat frame)
     }
     
     imshow("Detection", frame);
+}
+
+vector<Rect> maskedDetection(Mat frame, int& frameCount, vector<Rect> prevFaces)
+{
+	if (prevFaces.empty()) {
+		frameCount = 0;
+	}
+	Mat frame_gray;
+	cvtColor(frame, frame_gray, COLOR_BGR2GRAY);
+	equalizeHist(frame_gray, frame_gray);
+	vector<Rect> faces;
+	face_cascade.detectMultiScale(frame_gray, faces);
+	for (size_t i = 0; i < faces.size(); i++)
+	{
+		for (Rect& f : prevFaces){
+			if (faces[i].area() > f.area()*0.9 && faces[i].area() < f.area()*1.1) {
+				++frameCount;
+				break;
+			}
+		}
+		Point center(faces[i].x + faces[i].width / 2, faces[i].y + faces[i].height / 2);
+		rectangle(frame, faces.at(i), frameCount > 2 ? Scalar(0, 255, 0) : Scalar(255, 0, 255), 4);
+		Mat faceROI = frame_gray(faces[i]);
+		if (frameCount > 2) {
+			putText(frame, "Please enter", Point(faces[i].x, faces[i].y - 10), FONT_HERSHEY_SIMPLEX, 0.8, Scalar(0, 255, 0), 2);
+		}
+	}
+	putText(frame, "Please look at the screen", Point(0, 30), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 0), 2);
+	imshow("Detection", frame);
+	return faces;
 }
