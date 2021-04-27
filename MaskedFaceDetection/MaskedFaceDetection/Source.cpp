@@ -4,7 +4,7 @@
 
 using namespace std;
 using namespace cv;
-void detectAndDisplay(Mat);
+void testDetectAndDisplay(Mat);
 void test();
 void detect(int);
 vector<Rect> maskedDetection(Mat, int&, vector<Rect>);
@@ -18,12 +18,12 @@ int main(int argc, const char** argv)
         "{test      |       |Enable test mode.          }"
         "{camera    |0      |Camera number.             }"
         "{audio     |1      |Enable audio (0/1).        }");
-    parser.about("MaskedFaceDetection v0.1");
+    parser.about("MaskedFaceDetection v0.3");
     if (parser.has("help")) {
         parser.printMessage();
         return 0;
     }
-    String face_cascade_name = samples::findFile("maskedFaceCascade.xml");
+    String face_cascade_name = samples::findFile("data/maskedFaceCascade.xml");
     if (!face_cascade.load(face_cascade_name))
     {
         cout << "CASCADE LOAD ERROR" << endl;
@@ -37,13 +37,12 @@ int main(int argc, const char** argv)
     else {
         detect(parser.get<int>("camera"));
     }
-    
     return 0;
 }
 
 void test() {
 	namedWindow("Detection", CV_WINDOW_NORMAL);
-    std::string path = "A:\\Documents\\FinalYearProject\\FMLD-main\\test-images\\images";
+    std::string path = "data/images";
     for (const auto& entry : filesystem::directory_iterator(path)) {
         Mat img = imread(entry.path().u8string());
         while (waitKey(10) != 27) {
@@ -52,7 +51,7 @@ void test() {
                 cout << "IMAGE NOT FOUND: " << entry.path() << endl;
                 break;
             }
-            detectAndDisplay(img);
+            testDetectAndDisplay(img);
         }
     }
 }
@@ -86,7 +85,7 @@ void detect(int camera_device) {
     }
 }
 
-void detectAndDisplay(Mat frame)
+void testDetectAndDisplay(Mat frame)
 {
     Mat frame_gray;
     cvtColor(frame, frame_gray, COLOR_BGR2GRAY);
