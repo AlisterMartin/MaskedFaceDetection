@@ -1,6 +1,7 @@
 #include "opencv2/opencv.hpp"
 #include <filesystem>
 #include <iostream>
+#include <chrono>
 
 using namespace std;
 using namespace cv;
@@ -10,14 +11,14 @@ void detect(int);
 vector<Rect> maskedDetection(Mat, int&, vector<Rect>);
 
 CascadeClassifier face_cascade;
+chrono::milliseconds framePrev = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch());
 
 int main(int argc, const char** argv)
 {
     CommandLineParser parser(argc, argv,
         "{help h ?  |       |                           }"
         "{test      |       |Enable test mode.          }"
-        "{camera    |0      |Camera number.             }"
-        "{audio     |1      |Enable audio (0/1).        }");
+        "{camera    |0      |Camera number.             }");
     parser.about("MaskedFaceDetection v0.3");
     if (parser.has("help")) {
         parser.printMessage();
@@ -28,9 +29,7 @@ int main(int argc, const char** argv)
     {
         cout << "CASCADE LOAD ERROR" << endl;
         return -1;
-    };
-    
-    
+    }
     if (parser.has("test")) {
         test();
     }
@@ -45,13 +44,17 @@ void test() {
     std::string path = "data/images";
     for (const auto& entry : filesystem::directory_iterator(path)) {
         Mat img = imread(entry.path().u8string());
+        bool displayed = false;
         while (waitKey(10) != 27) {
             if (img.empty())
             {
                 cout << "IMAGE NOT FOUND: " << entry.path() << endl;
                 break;
             }
-            testDetectAndDisplay(img);
+            if (!displayed) { //optimisation
+                testDetectAndDisplay(img);
+                displayed = true;
+            }
         }
     }
 }
@@ -70,9 +73,6 @@ void detect(int camera_device) {
 	int frameCount = 0;
     while (capture.read(frame))
     {
-		if (frameCount > 2) {
-
-		}
         if (frame.empty())
         {
             cout << "CAMERA UNRESPONSIVE" << endl;
@@ -96,9 +96,7 @@ void testDetectAndDisplay(Mat frame)
     {
         Point center(faces[i].x + faces[i].width / 2, faces[i].y + faces[i].height / 2);
         rectangle(frame, faces.at(i), Scalar(255, 0, 255), 4);
-        Mat faceROI = frame_gray(faces[i]);
     }
-    
     imshow("Detection", frame);
 }
 
@@ -122,12 +120,15 @@ vector<Rect> maskedDetection(Mat frame, int& frameCount, vector<Rect> prevFaces)
 		}
 		Point center(faces[i].x + faces[i].width / 2, faces[i].y + faces[i].height / 2);
 		rectangle(frame, faces.at(i), frameCount > 2 ? Scalar(0, 255, 0) : Scalar(255, 0, 255), 4);
-		Mat faceROI = frame_gray(faces[i]);
 		if (frameCount > 2) {
 			putText(frame, "Please enter", Point(faces[i].x, faces[i].y - 10), FONT_HERSHEY_SIMPLEX, 0.8, Scalar(0, 255, 0), 2);
 		}
 	}
 	putText(frame, "Please look at the screen", Point(0, 30), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 0), 2);
+#ifdef DEBUG
+    putText(frame, chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()) - framePrev, Point(0, 60), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 0), 2);
+#endif // DEBUG
+    framePrev = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch());
 	imshow("Detection", frame);
 	return faces;
 }
