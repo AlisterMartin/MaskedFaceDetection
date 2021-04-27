@@ -125,9 +125,9 @@ vector<Rect> maskedDetection(Mat frame, int& frameCount, vector<Rect> prevFaces)
 		}
 	}
 	putText(frame, "Please look at the screen", Point(0, 30), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 0), 2);
-#ifdef DEBUG
-    putText(frame, chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()) - framePrev, Point(0, 60), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 0), 2);
-#endif // DEBUG
+    auto ft = (chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()) - framePrev).count();
+    to_string(ft);
+    putText(frame, to_string(ft), Point(0, 60), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 0, 0), 2);
     framePrev = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch());
 	imshow("Detection", frame);
 	return faces;
